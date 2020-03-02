@@ -11,7 +11,7 @@ The procedure consists of multiple steps:
 - Classification or Clustering
 
 Pipeline:
-![image](https://user-images.githubusercontent.com/33284371/75679807-9ac6fe80-5c90-11ea-92ee-5d3b6abe4960.png)
+![image](https://user-images.githubusercontent.com/33284371/75680257-7c153780-5c91-11ea-8699-2b55cf6a9c0f.png)
 
 ## GUI
 There's also a GUI implemented with PyQt5, that makes it possible to test and tune the methods described.
