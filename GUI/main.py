@@ -4,9 +4,9 @@ from PyQt5.QtCore import Qt, pyqtSignal
 import sys
 import os
 
-from gui.fileloadervisualizer import FileLoaderFeatureVisualizer
-from gui.dimreduction import DimReduction
-
+from fileloadervisualizer import FileLoaderFeatureVisualizer
+from dimreduction import DimReduction
+from clustering import Clustering
 
 class MainWindow(QMainWindow):
 
@@ -35,8 +35,11 @@ class MainWindow(QMainWindow):
 		actionTools = menubar.addMenu("Tools")
 		openFileAction = actionTools.addAction("Open file - Visualize features")
 
-		dimReductionAction = actionTools.addAction("Dimensionality reduction")
-		dimReductionAction.triggered.connect(self.showDimReduction)
+		#dimReductionAction = actionTools.addAction("Dimensionality reduction")
+		#dimReductionAction.triggered.connect(self.showDimReduction)
+
+		clustering = actionTools.addAction("Clustering")
+		clustering.triggered.connect(self.showClustering)
 
 		# Create QStackedWidget object and set the "File Loader & Feature Visualizer" view as the current one
 		fileLoaderFeatureVisualizer = FileLoaderFeatureVisualizer()
@@ -60,12 +63,18 @@ class MainWindow(QMainWindow):
 	def showFileLoader(self):
 		self.body.setCurrentIndex(0)
 
+	def showClustering(self):
+		clustering = Clustering()
+		self.body.addWidget(clustering)
+		self.body.setCurrentIndex(1)
+
+	'''
 	def showDimReduction(self):
 		if self.isAudioLoaded == True:
 			dimReduction = DimReduction(self.audio)
 			self.body.addWidget(dimReduction)
 			self.body.setCurrentIndex(1)
-
+	'''
 
 
 app = QApplication([])

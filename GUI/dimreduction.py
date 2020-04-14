@@ -146,7 +146,7 @@ class DimReduction(QWidget):
 			layout.addWidget(nrofbinsLabel)
 			nrofbinsEdit = QLineEdit()
 			nrofbinsEdit.setValidator(QIntValidator(0, 200));
-			nrofbinsEdit->setFixedSize(100,20);
+			nrofbinsEdit.setFixedSize(100,20);
 			layout.addWidget(nrofbinsEdit)
 
 			# Column 2 - Extracted features
