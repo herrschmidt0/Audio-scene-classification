@@ -30,6 +30,7 @@ class FileLoaderFeatureVisualizer(QWidget):
 		spectrogramGroup = self.Spectrograms()
 		mainLayout.addWidget(spectrogramGroup)
 		fileDetailsGroup.audioLoadedSignal.connect(spectrogramGroup.mfccTab.plotSpectograms)
+		fileDetailsGroup.audioLoadedSignal.connect(spectrogramGroup.melTab.plotSpectograms)
 		fileDetailsGroup.audioLoadedSignal.connect(spectrogramGroup.stftTab.plotSpectograms)
 
 		featureGroup = self.FeatureGroup()
@@ -78,13 +79,12 @@ class FileLoaderFeatureVisualizer(QWidget):
 			self.layout.addWidget(self.durationLabel, 1, 2)
 			self.samplingRateLabel = QLabel("Sampling rate:")
 			self.layout.addWidget(self.samplingRateLabel, 2, 2)
-			self.bitDepthLabel = QLabel("Bit depth:")
-			self.layout.addWidget(self.bitDepthLabel, 3, 2)
+			#self.bitDepthLabel = QLabel("Bit depth:")
+			#self.layout.addWidget(self.bitDepthLabel, 3, 2)
 
 
 		def openFileDialog(self):
-			fpath = QFileDialog.getOpenFileName(self, 'Open file', '\\',"Audio files (*.wav *.flac)")
-			#print(fname)
+			fpath = QFileDialog.getOpenFileName(self, 'Open file', '\\',"Audio files (*.wav *.flac *.mp3 *.3gp *.m4a)")
 			
 			if os.path.exists(fpath[0]):
 				self.fileName.setText(fpath[0].split('/')[-1])
@@ -92,8 +92,9 @@ class FileLoaderFeatureVisualizer(QWidget):
 				# Load audio file into Librosa
 				self.y, self.sr = librosa.load(fpath[0])
 				self.audioData = {
-				'y': self.y,
-				'sr': self.sr
+					'y': self.y,
+					'sr': self.sr,
+					'format': fpath[0].split('/')[-1][-3:]
 				}
 				self.audioLoadedSignal.emit(self.audioData)
 
@@ -103,10 +104,10 @@ class FileLoaderFeatureVisualizer(QWidget):
 				self.updateFileDetails()
 
 		def updateFileDetails(self):
+			self.formatLabel.setText('Format: ' + str(self.audioData['format']).capitalize())
 			self.samplingRateLabel.setText("Sampling rate: " + str(self.sr) + " Hz")
-
 			duration = librosa.core.get_duration(y=self.y, sr=self.sr)
-			self.durationLabel.setText("Duration: " + str(duration) + " seconds")
+			self.durationLabel.setText("Duration: " + str(round(duration, 3)) + " seconds")
 
 		def playAudio(self):
 			if self.qtaudio != None:
@@ -124,10 +125,12 @@ class FileLoaderFeatureVisualizer(QWidget):
 			super().__init__()
 
 			self.stftTab = self.StftTab()
+			self.melTab = self.MelTab()
 			self.mfccTab = self.MfccTab()
 
 			self.addTab(self.stftTab, "STFT")
-			self.addTab(self.mfccTab, "MFCC")
+			self.addTab(self.melTab, 'Mel')
+			self.addTab(self.mfccTab, "MFCC 40 bins")
 
 		class StftTab(QWidget):
 			def __init__(self):
@@ -146,7 +149,29 @@ class FileLoaderFeatureVisualizer(QWidget):
 				S = librosa.amplitude_to_db(abs(stft))
 				
 				ax = self.figure.add_subplot(111)   		
-				librosa.display.specshow(S, x_axis='time', ax=ax)
+				librosa.display.specshow(S, x_axis='time', y_axis='linear', ax=ax)
+				ax.plot()
+
+				self.canvas.draw()
+
+		class MelTab(QWidget):
+			def __init__(self):
+				super().__init__()
+				
+				layout = QVBoxLayout()
+				self.setLayout(layout)
+
+				self.figure = Figure()
+				self.canvas = FigureCanvas(self.figure)			
+				layout.addWidget(self.canvas)
+
+			def plotSpectograms(self, audio):
+
+				S = librosa.feature.melspectrogram(audio['y'], sr=audio['sr'], n_mels=40, n_fft=2048, hop_length=512)
+				S_dB = librosa.power_to_db(S, ref=np.max)
+
+				ax = self.figure.add_subplot(111)   		
+				librosa.display.specshow(S_dB, x_axis='time', y_axis='mel', ax=ax)
 				ax.plot()
 
 				self.canvas.draw()
@@ -164,11 +189,12 @@ class FileLoaderFeatureVisualizer(QWidget):
 
 			def plotSpectograms(self, audio):
 
-				mfcc = librosa.feature.mfcc(audio['y'], sr=audio['sr'], n_mfcc=50)
-				#print(mfcc)
-				
-				ax = self.figure.add_subplot(111)   		
+				mfcc = librosa.feature.mfcc(audio['y'], sr=audio['sr'], n_mfcc=40)
+
+				ax = self.figure.add_subplot(111) 
 				librosa.display.specshow(mfcc, x_axis='time', ax=ax)
+				#mappable = ax.imshow(mfcc)
+				#self.figure.colorbar(mappable=mappable, ax=ax)  	
 				ax.plot()
 
 				self.canvas.draw()
@@ -180,7 +206,8 @@ class FileLoaderFeatureVisualizer(QWidget):
 		def __init__(self):
 			super().__init__()
 
-			tabTitles = ['Spectral centroids', 'Spectral bandwidths']
+			tabTitles = ['RMS', 'Zero crossing rate', 'Spectral centroids', 'Spectral bandwidths', \
+			'Spectral flatness', 'Spectral rolloff']
 			self.tabs = []
 
 			for title in tabTitles:
@@ -190,10 +217,18 @@ class FileLoaderFeatureVisualizer(QWidget):
 
 		def plotFeatures(self, audio):
 
+			Sc = librosa.stft(y=audio['y'], n_fft=2048, hop_length=512, window=np.hanning(2048))
+			S = np.abs(Sc)
+
+			rms = librosa.feature.rms(S=S)
+			zcr = librosa.feature.zero_crossing_rate(y=audio['y'])
 			centroids = librosa.feature.spectral_centroid(y=audio['y'], sr=audio['sr'])
 			bandwidths = librosa.feature.spectral_bandwidth(y=audio['y'], sr=audio['sr'])
+			flatness = librosa.feature.spectral_flatness(S=S)
+			rolloff = librosa.feature.spectral_rolloff(S=S)
 
-			data = [centroids, bandwidths]
+
+			data = [rms, zcr, centroids, bandwidths, flatness, rolloff]
 
 			for i, tab in enumerate(self.tabs):
 				tab.draw(data[i])
@@ -211,7 +246,11 @@ class FileLoaderFeatureVisualizer(QWidget):
 
 			def draw(self, data):
 
-				ax = self.figure.add_subplot(111)   		
-				librosa.display.specshow(data, x_axis='time', ax=ax)
+				self.figure.clf()
+				ax = self.figure.add_subplot(111)
+				ax.semilogy(data.T)
+				ax.set_xticks([])
+				ax.set_xlim([0, data.shape[-1]])
+				#librosa.display.specshow(data, x_axis='time', ax=ax)
 				ax.plot()
 				self.canvas.draw()

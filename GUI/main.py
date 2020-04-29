@@ -7,6 +7,7 @@ import os
 from fileloadervisualizer import FileLoaderFeatureVisualizer
 from dimreduction import DimReduction
 from clustering import Clustering
+from classification import Classification
 
 class MainWindow(QMainWindow):
 
@@ -31,23 +32,45 @@ class MainWindow(QMainWindow):
 		actionFile = menubar.addMenu("File")
 		quitAction = actionFile.addAction("Quit")
 		quitAction.triggered.connect(self.closeApplication)
-
 		actionTools = menubar.addMenu("Tools")
-		openFileAction = actionTools.addAction("Open file - Visualize features")
+
+		self.body = QStackedWidget()
 
 		#dimReductionAction = actionTools.addAction("Dimensionality reduction")
 		#dimReductionAction.triggered.connect(self.showDimReduction)
 
-		clustering = actionTools.addAction("Clustering")
-		clustering.triggered.connect(self.showClustering)
-
-		# Create QStackedWidget object and set the "File Loader & Feature Visualizer" view as the current one
+		openFileAction = actionTools.addAction("Open file - Visualize features")
+		openFileAction.triggered.connect(self.showFileLoader)
+		
 		fileLoaderFeatureVisualizer = FileLoaderFeatureVisualizer()
 		fileLoaderFeatureVisualizer.audioLoadedSignal.connect(self.audioLoaded)
-
-		self.body = QStackedWidget()
 		self.body.addWidget(fileLoaderFeatureVisualizer)
-		openFileAction.triggered.connect(self.showFileLoader)
+
+		clusteringAction = actionTools.addAction("Clustering")
+		clusteringAction.triggered.connect(self.showClustering)
+		
+		clusteringWidget = Clustering()
+		
+		scrollArea = QScrollArea()
+		scrollArea.setWidgetResizable(True)
+		scrollArea.setWidget(clusteringWidget)
+		scrollArea.setFixedHeight(600)
+		self.body.addWidget(scrollArea)
+
+		classificationAction = actionTools.addAction("Classification")
+		classificationAction.triggered.connect(self.showClassification)
+
+		classificationWidget = Classification()
+
+		scrollArea = QScrollArea()
+		scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+		scrollArea.setWidgetResizable(True)
+		scrollArea.setWidget(classificationWidget)
+		scrollArea.setFixedHeight(600)
+
+		self.body.addWidget(scrollArea)
+
+
 		mainLayout.addWidget(self.body)
 
 		# There is no file loaded yet
@@ -64,9 +87,12 @@ class MainWindow(QMainWindow):
 		self.body.setCurrentIndex(0)
 
 	def showClustering(self):
-		clustering = Clustering()
-		self.body.addWidget(clustering)
+
 		self.body.setCurrentIndex(1)
+
+	def showClassification(self):
+
+		self.body.setCurrentIndex(2)
 
 	'''
 	def showDimReduction(self):
