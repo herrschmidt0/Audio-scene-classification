@@ -134,6 +134,12 @@ class Clustering(QWidget):
 		self.canvas.setFixedWidth(600)
 		self.mainLayout.addWidget(self.canvas)
 
+		# Evaluation text
+		self.eval_tedit = QPlainTextEdit()
+		self.eval_tedit.setFixedHeight(300)	
+		self.mainLayout.addWidget(self.eval_tedit)
+
+
 	def applyClustering(self, params):
 
 		def load_samples(fname_data, fname_labels):
@@ -311,6 +317,4 @@ class Clustering(QWidget):
 			'\nHomogeneity score: ' + str(round(evaluation['low'][4], 2)) +\
 			'\nCompleteness score: ' + str(round(evaluation['low'][5], 2))
 
-		eval_tedit = QPlainTextEdit(text)
-		eval_tedit.setFixedHeight(300)	
-		self.mainLayout.addWidget(eval_tedit)
+		self.eval_tedit.setPlainText(text)
