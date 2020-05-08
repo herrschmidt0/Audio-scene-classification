@@ -143,6 +143,18 @@ class Classification(QWidget):
 		paramGroup.setFixedHeight(300)
 		self.mainLayout.addWidget(paramGroup)
 
+		# Evaluation
+		self.acc_tedit = QLineEdit()
+		self.mainLayout.addWidget(self.acc_tedit)
+
+		self.figure = Figure()
+		self.canvas = FigureCanvas(self.figure)
+		self.canvas.setFixedHeight(600)	
+		self.mainLayout.addWidget(self.canvas)
+
+		self.report_tedit = QPlainTextEdit()
+		self.report_tedit.setFixedHeight(600)	
+		self.mainLayout.addWidget(self.report_tedit)
 
 	def startClassification(self, params):
 
@@ -294,16 +306,11 @@ class Classification(QWidget):
 
 		# Display overall accuracy
 		text = 'Overall accuracy: ' + str(round(np.mean([x['accuracy'] for x in results['score']]), 3))
-		acc_tedit = QLineEdit(text)
-		self.mainLayout.addWidget(acc_tedit)
+		self.acc_tedit.setText(text)
 
 		# Plot learning curve
-		figure = Figure()
-		self.canvas = FigureCanvas(figure)
-		self.canvas.setFixedHeight(600)	
-		self.mainLayout.addWidget(self.canvas)
-
-		ax1 = figure.add_subplot(2,2,1) 
+		self.figure.clf()
+		ax1 = self.figure.add_subplot(2,2,1) 
 
 		# Plot training & validation accuracy values
 		ax1.plot(results['history']['categorical_accuracy'])
@@ -313,7 +320,7 @@ class Classification(QWidget):
 		ax1.set_xlabel('Epoch')
 		ax1.legend(['Train', 'Test'], loc='upper left')
 
-		ax2 = figure.add_subplot(2,2,2) 
+		ax2 = self.figure.add_subplot(2,2,2) 
 
 		# Plot training & validation loss values
 		ax2.plot(results['history']['loss'])
@@ -323,7 +330,7 @@ class Classification(QWidget):
 		ax2.set_xlabel('Epoch')
 		ax2.legend(['Train', 'Test'], loc='upper left')
 
-		ax3 = figure.add_subplot(2,2,3)
+		ax3 = self.figure.add_subplot(2,2,3)
 		sn.heatmap(results['score'][4]['confusion_matrix'], ax=ax3, annot=True)
 		
 		self.canvas.draw()
@@ -333,6 +340,4 @@ class Classification(QWidget):
 		text = pp.pformat(results['score'])
 		#text = json.dumps(results['score'], sort_keys=True, indent=4)
 		
-		report_tedit = QPlainTextEdit(text)
-		report_tedit.setFixedHeight(600)	
-		self.mainLayout.addWidget(report_tedit)
+		self.report_tedit.setPlainText(text)
