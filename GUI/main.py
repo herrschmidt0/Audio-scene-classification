@@ -5,7 +5,6 @@ import sys
 import os
 
 from fileloadervisualizer import FileLoaderFeatureVisualizer
-from dimreduction import DimReduction
 from clustering import Clustering
 from classification import Classification
 
@@ -94,13 +93,6 @@ class MainWindow(QMainWindow):
 
 		self.body.setCurrentIndex(2)
 
-	'''
-	def showDimReduction(self):
-		if self.isAudioLoaded == True:
-			dimReduction = DimReduction(self.audio)
-			self.body.addWidget(dimReduction)
-			self.body.setCurrentIndex(1)
-	'''
 
 
 app = QApplication([])
